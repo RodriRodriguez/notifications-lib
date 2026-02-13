@@ -137,6 +137,16 @@
                             <mainClass>com.notifications.examples.EmailExample</mainClass>
                         </configuration>
                     </execution>
+                    <!-- Ejecución para PushExample -->
+                    <execution>
+                        <id>push-example</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.notifications.examples.PushExample</mainClass>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 

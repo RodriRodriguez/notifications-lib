@@ -4,9 +4,13 @@ import com.notifications.channels.push.PushConfig;
 import com.notifications.channels.push.PushNotification;
 import com.notifications.core.NotificationProvider;
 import com.notifications.core.NotificationResult;
+import com.notifications.providers.push.dto.FcmMessagePayload;
+import com.notifications.providers.push.dto.FcmSendResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public final class FirebaseProvider implements NotificationProvider<PushNotification> {
@@ -32,23 +36,85 @@ public final class FirebaseProvider implements NotificationProvider<PushNotifica
     @Override
     public NotificationResult send(PushNotification notification) {
         logger.info("Simulating Firebase FCM API call:");
-        logger.debug("  Endpoint: POST https://fcm.googleapis.com/v1/projects/{}/messages:send", 
-                config.getProjectId());
-        logger.debug("  Auth: Bearer (OAuth 2.0 token)");
-        logger.debug("  Token: {}", notification.getRecipients());
-        logger.debug("  Title: {}", notification.getTitle());
-        logger.debug("  Body: {}", notification.getBody());
 
         try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+            if (notification.getRecipients().isEmpty()) {
+                return buildErrorResult("At least one device token is required", "VALIDATION_ERROR", 400);
+            }
 
-        String messageId = "fcm-" + UUID.randomUUID().toString().substring(0, 8);
-        logger.info("Firebase push notification sent successfully. Message ID: {}", messageId);
+            String title = notification.getTitle();
+            String body = notification.getBody();
+            
+            if (title == null || title.trim().isEmpty()) {
+                return buildErrorResult("Notification title cannot be empty", "VALIDATION_ERROR", 400);
+            }
+
+            FcmMessagePayload payload = buildFcmPayload(notification);
+
+            logger.debug("FCM Payload: Token={}, Title={}, Body length={}", 
+                    payload.getMessage().getToken(),
+                    payload.getMessage().getNotification().getTitle(),
+                    payload.getMessage().getNotification().getBody().length());
+
+            Thread.sleep(50);
+
+            String messageId = UUID.randomUUID().toString().replace("-", "");
+            FcmSendResponse response = FcmSendResponse.success(config.getProjectId(), messageId);
+            
+            logger.info("Firebase push notification sent successfully. Message ID: {}", messageId);
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("fcm_message_id", messageId);
+            metadata.put("fcm_name", response.getName());
+            metadata.put("status_code", response.getStatusCode());
+            
+            return new NotificationResult.Builder()
+                    .success(true)
+                    .messageId(messageId)
+                    .channel(getChannelType())
+                    .provider(getProviderName())
+                    .statusCode(response.getStatusCode())
+                    .providerMetadata(metadata)
+                    .build();
+                    
+        } catch (Exception e) {
+            logger.error("Error sending push notification via Firebase", e);
+            return buildErrorResult(
+                    String.format("Firebase FCM API error: %s", e.getMessage()),
+                    "PROVIDER_ERROR",
+                    500
+            );
+        }
+    }
+
+    private FcmMessagePayload buildFcmPayload(PushNotification notification) {
+        String deviceToken = notification.getRecipients().isEmpty() 
+                ? "" 
+                : notification.getRecipients().get(0).getAddress();
+
+        FcmMessagePayload.FcmNotification fcmNotification = new FcmMessagePayload.FcmNotification(
+                notification.getTitle(),
+                notification.getBody()
+        );
+
+        FcmMessagePayload.FcmMessage message = new FcmMessagePayload.FcmMessage(
+                deviceToken,
+                fcmNotification,
+                null
+        );
         
-        return NotificationResult.success(messageId, getChannelType(), getProviderName());
+        return new FcmMessagePayload(message);
+    }
+
+    private NotificationResult buildErrorResult(String errorMessage, String errorCode, int statusCode) {
+        return new NotificationResult.Builder()
+                .success(false)
+                .error(errorMessage)
+                .errorCode(errorCode)
+                .channel(getChannelType())
+                .provider(getProviderName())
+                .statusCode(statusCode)
+                .build();
     }
 
     @Override
