@@ -112,6 +112,32 @@
                 <configuration>
                     <mainClass>com.notifications.examples.SmsExample</mainClass>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>sms-example</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.notifications.examples.SmsExample</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>email-example</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.notifications.examples.EmailExample</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Plugin para crear fat JAR con todas las dependencias -->

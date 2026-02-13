@@ -1,6 +1,9 @@
 package com.notifications.core;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public final class NotificationResult {
@@ -12,6 +15,8 @@ public final class NotificationResult {
     private final Instant timestamp;
     private final String channel;
     private final String provider;
+    private final int statusCode;
+    private final Map<String, Object> providerMetadata;
 
     private NotificationResult(Builder builder) {
         this.success = builder.success;
@@ -21,6 +26,10 @@ public final class NotificationResult {
         this.timestamp = builder.timestamp != null ? builder.timestamp : Instant.now();
         this.channel = builder.channel;
         this.provider = builder.provider;
+        this.statusCode = builder.statusCode != null ? builder.statusCode : (success ? 200 : 500);
+        this.providerMetadata = builder.providerMetadata != null 
+            ? Collections.unmodifiableMap(new HashMap<>(builder.providerMetadata)) 
+            : Map.of();
     }
 
     public static NotificationResult success(String messageId, String channel, String provider) {
@@ -29,6 +38,7 @@ public final class NotificationResult {
                 .messageId(messageId)
                 .channel(channel)
                 .provider(provider)
+                .statusCode(202)
                 .build();
     }
 
@@ -39,6 +49,7 @@ public final class NotificationResult {
                 .errorCode(errorCode)
                 .channel(channel)
                 .provider(provider)
+                .statusCode(400)
                 .build();
     }
 
@@ -74,14 +85,22 @@ public final class NotificationResult {
         return provider;
     }
 
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public Map<String, Object> getProviderMetadata() {
+        return providerMetadata;
+    }
+
     @Override
     public String toString() {
         if (success) {
-            return String.format("NotificationResult{success=true, messageId='%s', channel='%s', provider='%s', timestamp=%s}",
-                    messageId, channel, provider, timestamp);
+            return String.format("NotificationResult{success=true, messageId='%s', channel='%s', provider='%s', statusCode=%d, timestamp=%s}",
+                    messageId, channel, provider, statusCode, timestamp);
         } else {
-            return String.format("NotificationResult{success=false, error='%s', errorCode='%s', channel='%s', provider='%s', timestamp=%s}",
-                    error, errorCode, channel, provider, timestamp);
+            return String.format("NotificationResult{success=false, error='%s', errorCode='%s', channel='%s', provider='%s', statusCode=%d, timestamp=%s}",
+                    error, errorCode, channel, provider, statusCode, timestamp);
         }
     }
 
@@ -93,6 +112,8 @@ public final class NotificationResult {
         private Instant timestamp;
         private String channel;
         private String provider;
+        private Integer statusCode;
+        private Map<String, Object> providerMetadata;
 
         public Builder success(boolean success) {
             this.success = success;
@@ -126,6 +147,24 @@ public final class NotificationResult {
 
         public Builder provider(String provider) {
             this.provider = provider;
+            return this;
+        }
+
+        public Builder statusCode(int statusCode) {
+            this.statusCode = statusCode;
+            return this;
+        }
+
+        public Builder providerMetadata(Map<String, Object> providerMetadata) {
+            this.providerMetadata = providerMetadata != null ? new HashMap<>(providerMetadata) : null;
+            return this;
+        }
+
+        public Builder addMetadata(String key, Object value) {
+            if (this.providerMetadata == null) {
+                this.providerMetadata = new HashMap<>();
+            }
+            this.providerMetadata.put(key, value);
             return this;
         }
 

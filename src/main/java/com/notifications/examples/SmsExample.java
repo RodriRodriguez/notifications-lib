@@ -57,7 +57,7 @@ public class SmsExample {
             logger.debug("Canal utilizado: {}", result.getChannel());
             logger.debug("Proveedor utilizado: {}", result.getProvider());
             
-            System.out.println("✅ SMS enviado exitosamente!");
+            System.out.println("SMS enviado exitosamente!");
             result.getMessageId().ifPresent(id -> System.out.println("Message ID: " + id));
         } else {
             logger.error("Error al enviar SMS");

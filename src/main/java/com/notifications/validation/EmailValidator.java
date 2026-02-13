@@ -27,15 +27,22 @@ public final class EmailValidator {
             return ValidationResult.failure("At least one recipient is required");
         }
         for (Recipient recipient : notification.getRecipients()) {
-            if (!isValidEmail(recipient.getAddress())) {
+            String address = recipient.getAddress();
+            if (address == null || address.trim().isEmpty()) {
+                return ValidationResult.failure("Invalid email address: email cannot be empty");
+            }
+            if (!isValidEmail(address)) {
                 return ValidationResult.failure(
-                        String.format("Invalid email address: %s", recipient.getAddress())
+                        String.format("Invalid email address: %s", address)
                 );
             }
         }
 
         if (notification.getCcRecipients() != null) {
             for (String cc : notification.getCcRecipients()) {
+                if (cc == null || cc.trim().isEmpty()) {
+                    return ValidationResult.failure("Invalid CC email address: email cannot be empty");
+                }
                 if (!isValidEmail(cc)) {
                     return ValidationResult.failure(
                             String.format("Invalid CC email address: %s", cc)

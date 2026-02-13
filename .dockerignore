@@ -1,0 +1,34 @@
+# Directorios de build y compilación
+target/
+.classpath
+.project
+.settings/
+bin/
+out/
+
+# Archivos de IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de Git
+.git/
+.gitignore
+
+# Archivos de documentación (opcional, puedes incluirlos si quieres)
+# README.md
+
+# Archivos de logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.bak
+*~
+
