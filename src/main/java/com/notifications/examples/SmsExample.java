@@ -39,16 +39,6 @@ public class SmsExample {
         logger.info("Preparando envío de SMS a: +543513873741");
         logger.debug("Contenido del mensaje: Your verification code is 123456");
 
-        ValidationResult validationResult = PhoneValidator.validate(sms);
-        if (validationResult.isInvalid()) {
-            logger.error("Validación fallida en SmsExample: {}", validationResult.getErrorMessage().orElse("Unknown validation error"));
-            System.out.println("Error de validación antes del envío:");
-            System.out.println("Error: " + validationResult.getErrorMessage().orElse("Validation failed"));
-            return;
-        } else {
-            logger.info("Validación exitosa: número de teléfono válido según libphonenumber");
-        }
-
         NotificationResult result = service.send(sms);
 
         if (result.isSuccess()) {
@@ -56,17 +46,29 @@ public class SmsExample {
             result.getMessageId().ifPresent(id -> logger.info("Message ID: {}", id));
             logger.debug("Canal utilizado: {}", result.getChannel());
             logger.debug("Proveedor utilizado: {}", result.getProvider());
+            logger.debug("Status Code: {}", result.getStatusCode());
+            logger.debug("Provider Metadata: {}", result.getProviderMetadata());
             
             System.out.println("SMS enviado exitosamente!");
             result.getMessageId().ifPresent(id -> System.out.println("Message ID: " + id));
+            System.out.println("Status Code: " + result.getStatusCode());
+            System.out.println("Twilio Message SID: " + result.getProviderMetadata().get("twilio_message_sid"));
         } else {
             logger.error("Error al enviar SMS");
             result.getError().ifPresent(error -> logger.error("Error: {}", error));
             result.getErrorCode().ifPresent(code -> logger.error("Código de error: {}", code));
+            result.getProviderMetadata().forEach((key, value) -> 
+                logger.error("Metadata {}: {}", key, value));
 
             System.out.println("Error al enviar SMS:");
-            result.getError().ifPresent(error -> System.out.println("Error: " + error));
-            result.getErrorCode().ifPresent(code -> System.out.println("Código: " + code));
+            System.out.println("Error: " + result.getError().orElse("Unknown error"));
+            System.out.println("Código: " + result.getErrorCode().orElse("N/A"));
+            System.out.println("Status Code: " + result.getStatusCode());
+            if (!result.getProviderMetadata().isEmpty()) {
+                System.out.println("Detalles del proveedor:");
+                result.getProviderMetadata().forEach((key, value) -> 
+                    System.out.println("  " + key + ": " + value));
+            }
         }
     }
 }
